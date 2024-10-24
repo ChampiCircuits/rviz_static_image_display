@@ -14,23 +14,31 @@
 #include <opencv2/opencv.hpp>
 #include <rviz_rendering/material_manager.hpp>
 #include <sensor_msgs/image_encodings.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
 
 constexpr auto RESOURCEGROUP_NAME = "rviz_rendering";
 
 namespace rviz_birdeye_display::displays {
 
     BirdeyeDisplay::BirdeyeDisplay() {
+
         
         // Properties:
-        image_path_property_ = new rviz_common::properties::StringProperty("Image Path", "/home/andre/Desktop/Vinyle_2025_BETA_V9.png", "Path to the image file",
+        image_path_property_ = new rviz_common::properties::StringProperty("Image Path", "", "Absolute path and format 'package://my_package/my_image.png' supported.",
                                                                            this, SLOT(updateImage()), this);
-        x_offset_property_ = new rviz_common::properties::FloatProperty("X Offset", 0, "X Offset",
+        x_offset_property_ = new rviz_common::properties::FloatProperty("X Offset (m)", 0, "Offset from origin",
                                                                             this, SLOT(updateImage()), this);
-        y_offset_property_ = new rviz_common::properties::FloatProperty("Y Offset", 0, "Y Offset",
+        y_offset_property_ = new rviz_common::properties::FloatProperty("Y Offset (m)", 0, "Offset from origin",
                                                                             this, SLOT(updateImage()), this);
-        resolution_property_ = new rviz_common::properties::FloatProperty("Resolution", 1000, "Resolution",
+        rotation_property_ = new rviz_common::properties::FloatProperty("Rotation (deg)", 0, "Rotation of the image in degrees (around origin)",
                                                                             this, SLOT(updateImage()), this);
-
+        resolution_property_ = new rviz_common::properties::FloatProperty("Resolution (px/m)", 1000, "Resolution of the image in pixels per meter (used for scaling)",
+                                                                            this, SLOT(updateImage()), this);
+        height_property_ = new rviz_common::properties::FloatProperty("Height (m)", 0, "Height of the image on the z axis",
+                                                                            this, SLOT(updateImage()), this);
+        tf_frame_property_ = new rviz_common::properties::StringProperty("Frame", "map", "",
+                                                                            this, SLOT(updateImage()), this);
 
         static int birdeye_count = 0;
         birdeye_count++;
@@ -38,12 +46,33 @@ namespace rviz_birdeye_display::displays {
         textureName = "BirdeyeTexture" + std::to_string(birdeye_count);
     }
 
+
     BirdeyeDisplay::~BirdeyeDisplay() {
         if (initialized()) {
             scene_manager_->destroyManualObject(imageObject);
         }
         // unsubscribe();
     }
+
+
+    std::string BirdeyeDisplay::parsePath(const std::string &path) {
+
+        // Supported formats:
+        // - absolute path
+        // - package://package_name/path
+
+        if (path.find("package://") == 0) {
+            std::string package_path = path.substr(10);
+            std::string package_name = package_path.substr(0, package_path.find("/"));
+            std::string package_relative_path = package_path.substr(package_path.find("/") + 1);
+
+            return ament_index_cpp::get_package_share_directory(package_name) + "/" + package_relative_path;
+        } 
+
+        return path;
+
+    }
+
 
     void BirdeyeDisplay::createTextures() {
 
@@ -89,16 +118,14 @@ namespace rviz_birdeye_display::displays {
         currentWidth = image.cols;
         currentHeight = image.rows;
 
-        setStatus(rviz_common::properties::StatusProperty::Ok, "Params", QString("OK"));
-
         Ogre::Vector3 position;
         Ogre::Quaternion orientation;
         builtin_interfaces::msg::Time stamp_0;
         stamp_0.sec = 0;
         stamp_0.nanosec = 0;
-        if (!context_->getFrameManager()->getTransform("map", stamp_0, // TODO get frame from param
+        if (!context_->getFrameManager()->getTransform(tf_frame_property_->getString().toStdString(), stamp_0,
                                                        position, orientation)) {
-            setMissingTransformToFixedFrame("map");
+            setMissingTransformToFixedFrame(tf_frame_property_->getString().toStdString());
             return;
         }
         setTransformOk();
@@ -138,21 +165,25 @@ namespace rviz_birdeye_display::displays {
          */
 
         // 0
-        imageObject->position(xOffset, height - yOffset, 0);
+        imageObject->position(xOffset, height - yOffset, height_property_->getFloat());
         imageObject->textureCoord(0, 0);
 
         // 1
-        imageObject->position(xOffset + width, height - yOffset, 0);
+        imageObject->position(xOffset + width, height - yOffset, height_property_->getFloat());
         imageObject->textureCoord(1, 0);
 
         // 2
-        imageObject->position(xOffset + width, -yOffset, 0);
+        imageObject->position(xOffset + width, -yOffset, height_property_->getFloat());
         imageObject->textureCoord(1, 1);
 
         // 3
-        imageObject->position(xOffset, -yOffset, 0);
+        imageObject->position(xOffset, -yOffset, height_property_->getFloat());
         imageObject->textureCoord(0, 1);
         imageObject->end();
+
+        scene_node_->resetOrientation();
+        scene_node_->setOrientation(Ogre::Quaternion(Ogre::Radian(Ogre::Degree(rotation_property_->getFloat())), Ogre::Vector3::UNIT_Z));
+
 
         Ogre::HardwarePixelBufferSharedPtr pixelBuffer = texture->getBuffer();
 
@@ -171,7 +202,7 @@ namespace rviz_birdeye_display::displays {
     }
 
     void BirdeyeDisplay::onEnable() {
-        processImage(image_path_property_->getString().toStdString());
+        processImage(parsePath(image_path_property_->getString().toStdString()));
     }
 
     void BirdeyeDisplay::onDisable() {
@@ -180,7 +211,7 @@ namespace rviz_birdeye_display::displays {
 
     void BirdeyeDisplay::updateImage()
     {        
-        processImage(image_path_property_->getString().toStdString());
+        processImage(parsePath(image_path_property_->getString().toStdString()));
     }
 
 } // namespace rviz_birdeye_display::displays

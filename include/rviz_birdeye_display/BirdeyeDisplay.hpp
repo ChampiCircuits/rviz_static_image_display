@@ -36,6 +36,8 @@ namespace rviz_birdeye_display::displays {
         void reset() override;
         void processImage(const std::string &image_path);
 
+        std::string parsePath(const std::string &path);
+
 
         Ogre::ManualObject *imageObject = nullptr;
         Ogre::TexturePtr texture;
@@ -50,14 +52,15 @@ namespace rviz_birdeye_display::displays {
         rviz_common::properties::FloatProperty *x_offset_property_;
         rviz_common::properties::FloatProperty *y_offset_property_;
         rviz_common::properties::FloatProperty *resolution_property_;
+        rviz_common::properties::FloatProperty *rotation_property_;
+        rviz_common::properties::FloatProperty *height_property_;
+        rviz_common::properties::StringProperty *tf_frame_property_;
 
         std::string materialName;
         std::string textureName;
 
         int currentHeight = 0;
         int currentWidth = 0;
-
-        void incomingMessage(const ImageMsg::ConstSharedPtr &msg);
 
         /**
          * Create new texture with current image size if it has changed

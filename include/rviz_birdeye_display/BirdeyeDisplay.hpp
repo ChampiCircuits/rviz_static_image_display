@@ -7,7 +7,8 @@
 
 #include <OgreHardwarePixelBuffer.h>
 #include <rviz_common/message_filter_display.hpp>
-#include <rviz_common/properties/editable_enum_property.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/string_property.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <spatz_interfaces/msg/bird_eye_param.hpp>
 
@@ -15,7 +16,7 @@
 
 namespace rviz_birdeye_display::displays {
 
-    class rviz_birdeye_display_PUBLIC BirdeyeDisplay : public rviz_common::_RosTopicDisplay {
+    class rviz_birdeye_display_PUBLIC BirdeyeDisplay : public rviz_common::Display {
         Q_OBJECT
 
         using ImageMsg = sensor_msgs::msg::Image;
@@ -24,12 +25,16 @@ namespace rviz_birdeye_display::displays {
       public:
         BirdeyeDisplay();
         ~BirdeyeDisplay() override;
+      
+
+      private Q_SLOTS:
+        void updateImage();
 
       private:
         void onInitialize() override;
 
         void reset() override;
-        void processMessage(const ImageMsg ::ConstSharedPtr &msg);
+        void processImage(const std::string &image_path);
 
 
         Ogre::ManualObject *imageObject = nullptr;
@@ -38,9 +43,13 @@ namespace rviz_birdeye_display::displays {
 
         rclcpp::Subscription<ImageMsg>::SharedPtr imageSub;
         rclcpp::Subscription<ParamMsg>::SharedPtr paramSub;
-        std::optional<ParamMsg> currentBirdeyeParam;
-
-        int messagesReceived = 0;
+        
+        // Properties:
+        // image_path, x_offset, y_offset, resolution
+        rviz_common::properties::StringProperty *image_path_property_;
+        rviz_common::properties::FloatProperty *x_offset_property_;
+        rviz_common::properties::FloatProperty *y_offset_property_;
+        rviz_common::properties::FloatProperty *resolution_property_;
 
         std::string materialName;
         std::string textureName;
@@ -54,14 +63,8 @@ namespace rviz_birdeye_display::displays {
          * Create new texture with current image size if it has changed
          */
         void createTextures();
-        void subscribe();
-        void unsubscribe();
 
-        void resetSubscription();
-        void updateTopic() override;
-        void setTopic(const QString &topic, const QString &datatype) override;
         void onEnable() override;
-
         void onDisable() override;
     };
 

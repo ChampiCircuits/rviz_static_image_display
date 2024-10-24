@@ -9,22 +9,17 @@
 #include <rviz_common/message_filter_display.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/string_property.hpp>
-#include <sensor_msgs/msg/image.hpp>
-#include <spatz_interfaces/msg/bird_eye_param.hpp>
 
-#include "rviz_birdeye_display/visibility_control.hpp"
+#include "rviz_static_image_display/visibility_control.hpp"
 
-namespace rviz_birdeye_display::displays {
+namespace rviz_static_image_display::displays {
 
-    class rviz_birdeye_display_PUBLIC BirdeyeDisplay : public rviz_common::Display {
+    class rviz_static_image_display_PUBLIC StaticImageDisplay : public rviz_common::Display {
         Q_OBJECT
 
-        using ImageMsg = sensor_msgs::msg::Image;
-        using ParamMsg = spatz_interfaces::msg::BirdEyeParam;
-
       public:
-        BirdeyeDisplay();
-        ~BirdeyeDisplay() override;
+        StaticImageDisplay();
+        ~StaticImageDisplay() override;
       
 
       private Q_SLOTS:
@@ -42,9 +37,6 @@ namespace rviz_birdeye_display::displays {
         Ogre::ManualObject *imageObject = nullptr;
         Ogre::TexturePtr texture;
         Ogre::MaterialPtr material;
-
-        rclcpp::Subscription<ImageMsg>::SharedPtr imageSub;
-        rclcpp::Subscription<ParamMsg>::SharedPtr paramSub;
         
         // Properties:
         // image_path, x_offset, y_offset, resolution
@@ -71,7 +63,7 @@ namespace rviz_birdeye_display::displays {
         void onDisable() override;
     };
 
-} // namespace rviz_birdeye_display::displays
+} // namespace rviz_static_image_display::displays
 
 
 #endif // VIZ_BIRDEYEDISPLAY_HPP

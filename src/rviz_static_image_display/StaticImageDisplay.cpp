@@ -2,7 +2,7 @@
 // Created by jonas on 6/30/21.
 //
 
-#include "rviz_birdeye_display/BirdeyeDisplay.hpp"
+#include "rviz_static_image_display/StaticImageDisplay.hpp"
 
 #include <OgreBillboardSet.h>
 #include <OgreMaterialManager.h>
@@ -13,15 +13,14 @@
 #include <OgreTextureManager.h>
 #include <opencv2/opencv.hpp>
 #include <rviz_rendering/material_manager.hpp>
-#include <sensor_msgs/image_encodings.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 
 constexpr auto RESOURCEGROUP_NAME = "rviz_rendering";
 
-namespace rviz_birdeye_display::displays {
+namespace rviz_static_image_display::displays {
 
-    BirdeyeDisplay::BirdeyeDisplay() {
+    StaticImageDisplay::StaticImageDisplay() {
 
         
         // Properties:
@@ -40,14 +39,14 @@ namespace rviz_birdeye_display::displays {
         tf_frame_property_ = new rviz_common::properties::StringProperty("Frame", "map", "",
                                                                             this, SLOT(updateImage()), this);
 
-        static int birdeye_count = 0;
-        birdeye_count++;
-        materialName = "BirdeyeMaterial" + std::to_string(birdeye_count);
-        textureName = "BirdeyeTexture" + std::to_string(birdeye_count);
+        static int static_image_display_count = 0;
+        static_image_display_count++;
+        materialName = "StaticImageMaterial" + std::to_string(static_image_display_count);
+        textureName = "StaticImageTexture" + std::to_string(static_image_display_count);
     }
 
 
-    BirdeyeDisplay::~BirdeyeDisplay() {
+    StaticImageDisplay::~StaticImageDisplay() {
         if (initialized()) {
             scene_manager_->destroyManualObject(imageObject);
         }
@@ -55,7 +54,7 @@ namespace rviz_birdeye_display::displays {
     }
 
 
-    std::string BirdeyeDisplay::parsePath(const std::string &path) {
+    std::string StaticImageDisplay::parsePath(const std::string &path) {
 
         // Supported formats:
         // - absolute path
@@ -74,7 +73,7 @@ namespace rviz_birdeye_display::displays {
     }
 
 
-    void BirdeyeDisplay::createTextures() {
+    void StaticImageDisplay::createTextures() {
 
         texture = Ogre::TextureManager::getSingleton().createManual(
                 textureName, RESOURCEGROUP_NAME, Ogre::TEX_TYPE_2D, currentWidth,
@@ -88,11 +87,11 @@ namespace rviz_birdeye_display::displays {
         rpass->setEmissive(Ogre::ColourValue::White);
         rpass->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
 
-        // currentHeight = currentBirdeyeParam->height;
-        // currentWidth = currentBirdeyeParam->width;
+        // currentHeight = currentStaticImageParam->height;
+        // currentWidth = currentStaticImageParam->width;
     }
 
-    void BirdeyeDisplay::onInitialize() {
+    void StaticImageDisplay::onInitialize() {
         // _RosTopicDisplay::onInitialize();
 
         imageObject = scene_manager_->createManualObject();
@@ -100,12 +99,12 @@ namespace rviz_birdeye_display::displays {
         scene_node_->attachObject(imageObject);
     }
 
-    void BirdeyeDisplay::reset() {
+    void StaticImageDisplay::reset() {
         // _RosTopicDisplay::reset();
         imageObject->clear();
     }
 
-    void BirdeyeDisplay::processImage(const std::string &image_path) {
+    void StaticImageDisplay::processImage(const std::string &image_path) {
 
         // Load image using OpenCV
         cv::Mat image = cv::imread(image_path, cv::IMREAD_UNCHANGED);
@@ -150,14 +149,14 @@ namespace rviz_birdeye_display::displays {
         auto width = currentWidth / resolution_property_->getFloat();
 
         /**
-         *        birdeye-height
+         *        static_image_display-height
          *     2------------------1
          *     |                  |
-         *     |                  | birdeye-width
+         *     |                  | static_image_display-width
          *     |                  |
          *     3------------------0
          *     |---------|     I
-         *      y-offset ^     I birdeye-x-offset
+         *      y-offset ^     I static_image_display-x-offset
          *               |     I
          *   driving dir |     I
          *               |     I
@@ -201,20 +200,20 @@ namespace rviz_birdeye_display::displays {
 
     }
 
-    void BirdeyeDisplay::onEnable() {
+    void StaticImageDisplay::onEnable() {
         processImage(parsePath(image_path_property_->getString().toStdString()));
     }
 
-    void BirdeyeDisplay::onDisable() {
+    void StaticImageDisplay::onDisable() {
         reset();
     }
 
-    void BirdeyeDisplay::updateImage()
+    void StaticImageDisplay::updateImage()
     {        
         processImage(parsePath(image_path_property_->getString().toStdString()));
     }
 
-} // namespace rviz_birdeye_display::displays
+} // namespace rviz_static_image_display::displays
 
 #include <pluginlib/class_list_macros.hpp> // NOLINT
-PLUGINLIB_EXPORT_CLASS(rviz_birdeye_display::displays::BirdeyeDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(rviz_static_image_display::displays::StaticImageDisplay, rviz_common::Display)

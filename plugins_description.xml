@@ -1,10 +1,9 @@
-<library path="rviz_birdeye_display">
-    <class name="rviz_birdeye_display/Birdeye"
-           type="rviz_birdeye_display::displays::BirdeyeDisplay"
+<library path="rviz_static_image_display">
+    <class name="rviz_static_image_display/StaticImage"
+           type="rviz_static_image_display::displays::StaticImageDisplay"
            base_class_type="rviz_common::Display">
         <description>
-            Displays birdview image in the 3d view
+            Displays static  image in the 3d view
         </description>
-        <message_type>sensor_msgs/msg/Image</message_type>
     </class>
 </library>

@@ -113,6 +113,7 @@ namespace rviz_static_image_display::displays {
 
             return;
         }
+        setStatus(rviz_common::properties::StatusProperty::Ok, "Image", "Image loaded");
 
         currentWidth = image.cols;
         currentHeight = image.rows;
